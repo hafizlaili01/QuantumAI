@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Dashboard: Quantum AI for Financial Anomaly Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate & Amber Harmony -->
+    <!-- Application Structure Plan: A thematic, single-page dashboard structure is used to transform the linear report into an exploratory experience. A sticky top navigation allows users to jump to key sections: an 'Overview' for context, an 'Interactive Architecture' to deconstruct the system flow, a 'Challenges & Gaps' section for comparative analysis, an 'R&D Landscape' to explore datasets and research priorities, and a 'Strategic Outlook' for conclusions. This non-linear structure prioritizes user-driven exploration over passive reading, allowing technical and strategic audiences to quickly access the information most relevant to them. Key interactions include clickable nodes in the architecture diagram, a dynamic chart for comparing limitations, and filterable cards for datasets and research gaps. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Hybrid Architecture Flow -> Goal: Organize/Understand -> Viz: Interactive HTML/CSS Diagram -> Interaction: Click nodes to show details -> Justification: Breaks down a complex system into digestible, user-explorable parts, enhancing comprehension over a static image. -> Method: HTML/CSS with JS for interaction.
+        - Report Info: Limitations of Classical, Quantum, Hybrid -> Goal: Compare -> Viz: Bar Chart -> Interaction: Hover for tooltips, buttons to filter -> Justification: Provides a quick, powerful visual comparison of challenges that is faster to grasp than text tables. -> Library: Chart.js.
+        - Report Info: Research Gaps, Datasets, Recommendations -> Goal: Inform/Organize -> Viz: Interactive Cards/Accordions -> Interaction: Click to expand/filter -> Justification: Uses progressive disclosure to keep the UI clean and prevent information overload, allowing users to drill down into specifics. -> Method: HTML/CSS with JS.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #1e293b; /* slate-800 */
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #f59e0b; /* amber-500 */
+            border-bottom-color: #f59e0b;
+        }
+        .architecture-node {
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .architecture-node:hover, .architecture-node.selected {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border-color: #f59e0b; /* amber-500 */
+        }
+        .tab-button.active {
+            background-color: #0f766e; /* teal-700 */
+            color: white;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-slate-700">QAI Anomaly Detection</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Overview</a>
+                        <a href="#architecture" class="nav-link px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Architecture</a>
+                        <a href="#challenges" class="nav-link px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Challenges & Gaps</a>
+                        <a href="#research" class="nav-link px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">R&D Landscape</a>
+                        <a href="#outlook" class="nav-link px-3 py-2 rounded-md text-sm font-medium border-b-2 border-transparent">Strategic Outlook</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 focus:outline-none">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#overview" class="block nav-link px-3 py-2 rounded-md text-base font-medium">Overview</a>
+                <a href="#architecture" class="block nav-link px-3 py-2 rounded-md text-base font-medium">Architecture</a>
+                <a href="#challenges" class="block nav-link px-3 py-2 rounded-md text-base font-medium">Challenges & Gaps</a>
+                <a href="#research" class="block nav-link px-3 py-2 rounded-md text-base font-medium">R&D Landscape</a>
+                <a href="#outlook" class="block nav-link px-3 py-2 rounded-md text-base font-medium">Strategic Outlook</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="overview" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-base font-semibold text-teal-600 tracking-wide uppercase">A New Paradigm in Financial Security</h2>
+                <p class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">Quantum AI Hybrid Framework for Anomaly Detection</p>
+                <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-500">
+                    This interactive report explores a forward-looking framework for industrial-scale financial networks like PayNet Malaysia. We analyze how combining classical computing's robustness with quantum computing's power can create a new generation of highly adaptive and accurate anomaly detection systems.
+                </p>
+
+                <!-- Quantum Concept Explainer Feature -->
+                <div class="mt-12 max-w-2xl mx-auto bg-slate-50 p-6 rounded-lg shadow-inner">
+                    <h3 class="text-lg font-medium text-slate-900 mb-4">Quantum Concept Explainer ✨</h3>
+                    <p class="text-sm text-slate-600 mb-4">Enter a quantum computing term (e.g., "Qubit", "Superposition", "Entanglement") to get a concise explanation relevant to Quantum AI and anomaly detection.</p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="quantumConceptInput" placeholder="e.g., Qubit" class="flex-grow p-3 rounded-md border border-slate-300 focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                        <button id="explainConceptBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-md shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105">
+                            Explain Concept ✨
+                        </button>
+                    </div>
+                    <div id="conceptExplanationOutput" class="mt-4 text-left p-4 bg-white rounded-md border border-slate-200 hidden">
+                        <p class="text-slate-700 italic" id="explanationText"></p>
+                        <div id="explanationLoading" class="hidden text-center text-teal-600 mt-2">Loading explanation...</div>
+                    </div>
+                </div>
+                <!-- End Quantum Concept Explainer Feature -->
+
+            </div>
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-slate-50 rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-slate-900">The Problem: Classical AI Limitations</h3>
+                        <p class="mt-2 text-slate-600">Classical AI, while powerful, faces an "arms race" against fraudsters. It struggles with massive real-time data, high false-positive rates, and adapting to novel, sophisticated attack patterns, creating significant computational and operational bottlenecks.</p>
+                    </div>
+                    <div class="bg-teal-50 rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-slate-900">The Solution: Hybrid Quantum-Classical Computing</h3>
+                        <p class="mt-2 text-slate-600">The most pragmatic path forward is Hybrid Quantum-Classical Computing (HQCC). This approach offloads computationally "intractable" problems to a Quantum Processing Unit (QPU) while classical systems handle data management, integration, and workflow orchestration, creating a resilient and powerful synergistic system.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Interactive Architecture Explorer</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-500">Click on any component in the framework below to understand its role, the technologies involved, and how it contributes to the overall anomaly detection pipeline.</p>
+                </div>
+                <div class="mt-12 lg:grid lg:grid-cols-3 lg:gap-8 items-start">
+                    <div id="architecture-diagram" class="lg:col-span-2 grid grid-cols-1 gap-4 text-center">
+                        <div data-id="ingestion" class="architecture-node bg-white p-4 rounded-lg border-2 border-slate-200 mx-auto w-full max-w-sm">
+                            <h4 class="font-semibold">1. Data Ingestion</h4>
+                            <p class="text-xs text-slate-500">Raw Financial Transactions</p>
+                        </div>
+                        <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+
+                        <div data-id="preprocessing" class="architecture-node bg-white p-4 rounded-lg border-2 border-slate-200 selected mx-auto w-full max-w-sm">
+                            <h4 class="font-semibold">2. Classical Pre-processing & Feature Engineering</h4>
+                            <p class="text-xs text-slate-500">Cleaning, Normalization, Pre-screening</p>
+                        </div>
+                        <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+
+                        <div class="flex flex-col md:flex-row justify-center items-start gap-4 w-full">
+                            <div class="flex flex-col items-center flex-1 max-w-sm">
+                                <p class="text-sm font-medium text-slate-600 mb-2">Classical Path</p>
+                                <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+                                <div class="bg-slate-100 p-4 rounded-lg border-2 border-dashed border-slate-300 w-full">
+                                    <h4 class="font-semibold">Classical Models</h4>
+                                    <p class="text-xs text-slate-500">Isolation Forest, Autoencoders</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center flex-1 max-w-sm">
+                                <p class="text-sm font-medium text-slate-600 mb-2">Quantum Path</p>
+                                <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+                                <div data-id="encoding" class="architecture-node bg-white p-4 rounded-lg border-2 border-slate-200 w-full">
+                                    <h4 class="font-semibold">3. Quantum Data Encoding</h4>
+                                    <p class="text-xs text-slate-500">Classical-to-Quantum Interface</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+
+                        <div data-id="qpu" class="architecture-node bg-teal-100 p-4 rounded-lg border-2 border-teal-200 mx-auto w-full max-w-sm">
+                            <h4 class="font-semibold text-teal-800">4. Quantum Processing Layer (QPU)</h4>
+                            <p class="text-xs text-teal-600">QAE, QSVM, VQC</p>
+                        </div>
+                        <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+
+                         <div data-id="interface" class="architecture-node bg-white p-4 rounded-lg border-2 border-slate-200 mx-auto w-full max-w-sm">
+                            <h4 class="font-semibold">5. Quantum-to-Classical Interface</h4>
+                            <p class="text-xs text-slate-500">Measurement & Translation</p>
+                        </div>
+                         <div class="flex justify-center items-center text-slate-500 text-3xl h-8"><span>&#8595;</span></div>
+
+                         <div data-id="postprocessing" class="architecture-node bg-white p-4 rounded-lg border-2 border-slate-200 mx-auto w-full max-w-sm">
+                            <h4 class="font-semibold">6. Classical Post-processing & Decision</h4>
+                            <p class="text-xs text-slate-500">Score Aggregation, Validation, Response</p>
+                        </div>
+                    </div>
+                    <div id="architecture-details" class="mt-8 lg:mt-0 lg:col-span-1 bg-white p-6 rounded-lg shadow-lg sticky top-24">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenges" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Challenges & Research Gaps</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-500">Understanding the limitations of current technologies is key to innovation. This chart compares the core challenges across classical and quantum-only approaches, highlighting the gaps that a hybrid system aims to fill.</p>
+                </div>
+                <div class="mt-12">
+                    <div class="chart-container">
+                        <canvas id="challengesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="research" class="py-16 md:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">R&D Landscape</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-500">Advancing QAI requires focusing on the most promising research areas and leveraging the right data. Explore the top research priorities and the datasets available for development.</p>
+                </div>
+                <div class="mt-12 space-y-12">
+                    <div>
+                        <h3 class="text-2xl font-bold text-center text-slate-800">Top 3 Promising Research Gaps</h3>
+                        <div id="research-gaps-container" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-center text-slate-800">Dataset Explorer</h3>
+                         <div id="datasets-container" class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="outlook" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Strategic Outlook & Recommendations</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-500">The path to deploying industrial-scale QAI is a strategic journey. It requires a phased approach focused on technology, talent, and trustworthy governance.</p>
+                </div>
+                <div id="recommendations-container" class="mt-12 max-w-4xl mx-auto space-y-4">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>Interactive QAI Framework Report | Generated for Exploratory Analysis</p>
+        </div>
+    </footer>
+
+    <!-- Modal for Research Gap Brainstormer -->
+    <div id="brainstormModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 class="text-xl font-bold text-slate-900 mb-4" id="modalTitle">Brainstorming Ideas for:</h3>
+            <div id="modalContent" class="text-slate-700"></div>
+            <div id="modalLoading" class="hidden text-center text-teal-600 mt-4">Generating ideas...</div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const architectureData = {
+            ingestion: {
+                title: '1. Data Ingestion (Classical Layer)',
+                description: 'The pipeline begins with the continuous ingestion of raw financial transaction data streams. This layer is built on robust, scalable classical infrastructure capable of handling high-velocity, high-volume data feeds from across the payment network.',
+                tech: ['Kafka', 'Spark Streaming', 'Real-time Databases']
+            },
+            preprocessing: {
+                title: '2. Classical Pre-processing & Feature Engineering',
+                description: 'This is a critical classical layer responsible for data cleaning, normalization, and handling extreme class imbalance. It performs initial anomaly pre-screening using efficient classical models to filter out obvious cases, and prepares feature vectors for potential quantum processing.',
+                tech: ['Isolation Forests', 'Classical Autoencoders', 'Transformers', 'PCA', 'SMOTE']
+            },
+            encoding: {
+                title: '3. Quantum Data Encoding',
+                description: 'A crucial and challenging interface where classical feature vectors are mapped into quantum states. The efficiency and fidelity of this process, which embeds classical information into the quantum Hilbert space, is a major bottleneck and a key area of research for achieving quantum advantage.',
+                tech: ['ZZFeatureMap', 'PauliFeatureMap', 'Amplitude Encoding']
+            },
+            qpu: {
+                title: '4. Quantum Processing Layer (QPU)',
+                description: 'The core quantum component where specific, computationally hard sub-routines are offloaded. Quantum algorithms analyze the data in a high-dimensional feature space to identify complex, non-linear patterns and subtle deviations that classical models may miss. This layer runs asynchronously to avoid latency bottlenecks.',
+                tech: ['Quantum Autoencoders (QAE)', 'Quantum SVM (QSVM)', 'Variational Quantum Classifiers (VQC)']
+            },
+            interface: {
+                title: '5. Quantum-to-Classical Interface',
+                description: 'After quantum processing, the quantum state is measured. This collapses the superposition into a classical result, such as a probability distribution or an anomaly score. This layer translates the quantum output back into a format that classical systems can understand and act upon.',
+                tech: ['Quantum State Tomography', 'Measurement Circuits']
+            },
+            postprocessing: {
+                title: '6. Classical Post-processing & Decision Layer',
+                description: 'The final classical layer aggregates scores from both classical and quantum paths. It applies dynamic thresholds, uses ensemble methods for a final decision, and integrates with human-in-the-loop validation dashboards. It triggers actionable alerts and automated responses, completing the detection cycle.',
+                tech: ['Ensemble Learning', 'Rule-Based Systems', 'Human-in-the-Loop Dashboards']
+            }
+        };
+
+        const researchGaps = [
+            { title: 'Scalability & Real-time Processing', description: 'Developing intelligent orchestration layers to dynamically balance loads between classical and quantum processors, and designing efficient data streaming architectures to handle industrial-scale data in real-time.'},
+            { title: 'Robustness to Evolving Fraud', description: 'Creating QAI models that are inherently robust to novel, unseen fraud patterns (zero-day attacks) and resilient against sophisticated adversarial attacks designed to evade detection.'},
+            { title: 'Interpretability & Explainability (XQAI)', description: 'Building "Explainable Quantum AI" techniques to understand and trust model decisions. This is critical for debugging, regulatory compliance, auditing, and ensuring fairness in a high-stakes financial environment.'},
+        ];
+
+        const datasets = [
+            { name: 'PaySim Synthetic Mobile Money', source: 'Kaggle', description: 'Emulates mobile money flows with explicit fraud labels. Good for initial model development.' },
+            { name: 'Credit Card Fraud Detection', source: 'Kaggle/UCI ML', description: 'Classic dataset for studying extreme class imbalance. Features are PCA-transformed.' },
+            { name: 'Fraud Detection Dataset', source: 'Kaggle', description: 'Comprehensive, including customer and merchant data for contextual analysis.' },
+            { name: 'FiFAR Dataset', source: 'Kaggle', description: 'Focuses on human-AI collaboration for alert reviews, useful for designing feedback systems.' },
+            { name: 'Generative AI (GANs, VAEs)', source: 'Method', description: 'Crucial for creating tailored, privacy-preserving datasets that simulate diverse fraud scenarios.' },
+        ];
+
+        const recommendations = [
+            { title: 'Prioritize Hybrid Architecture Development', description: 'Invest in the robust classical-quantum interface, focusing on intelligent schedulers and load balancers.' },
+            { title: 'Focus on Unsupervised QAI', description: 'Direct research toward algorithms like QAEs for proactive detection of novel fraud without needing labeled data.' },
+            { title: 'Invest in Advanced Synthetic Data Generation', description: 'Develop in-house or collaborative capabilities to create realistic, industrial-scale synthetic datasets for training and testing.' },
+            { title: 'Champion Explainable Quantum AI (XQAI)', description: 'Initiate programs to develop XQAI for trust, regulatory compliance, and effective human oversight.' },
+            { title: 'Proactively Engage with Regulators', description: 'Collaborate with financial authorities to shape guidelines for QAI, addressing privacy, bias, and ethics.' },
+            { title: 'Cultivate Quantum AI Talent', description: 'Invest in upskilling and academic partnerships to build a strong ecosystem of quantum expertise.' },
+        ];
+
+        const challengesChartData = {
+            labels: ['Scalability', 'Adaptability', 'False Positives', 'High-Dimensional Data', 'Hardware Errors', 'Qubit Limits'],
+            datasets: [{
+                label: 'Classical AI Limitations',
+                data: [8, 9, 8, 7, 0, 0],
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Quantum-only (NISQ) Limitations',
+                data: [5, 4, 3, 2, 9, 10],
+                backgroundColor: 'rgba(13, 148, 136, 0.7)',
+                borderColor: 'rgba(13, 148, 136, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const architectureDetailsContainer = document.getElementById('architecture-details');
+        const architectureNodes = document.querySelectorAll('.architecture-node');
+        
+        function updateArchitectureDetails(id) {
+            const data = architectureData[id];
+            if (!data) return;
+
+            architectureDetailsContainer.innerHTML = `
+                <h3 class="text-xl font-bold text-slate-900">${data.title}</h3>
+                <p class="mt-2 text-slate-600">${data.description}</p>
+                <div class="mt-4">
+                    <h4 class="text-sm font-semibold text-slate-700">Key Technologies/Methods:</h4>
+                    <ul class="mt-2 list-disc list-inside text-slate-500 space-y-1">
+                        ${data.tech.map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            architectureNodes.forEach(node => {
+                node.classList.remove('selected', 'bg-amber-50');
+                if (node.dataset.id === id) {
+                    node.classList.add('selected');
+                }
+            });
+        }
+        
+        architectureNodes.forEach(node => {
+            node.addEventListener('click', () => {
+                updateArchitectureDetails(node.dataset.id);
+            });
+        });
+        
+        updateArchitectureDetails('preprocessing');
+
+        const ctx = document.getElementById('challengesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: challengesChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 10,
+                        title: { display: true, text: 'Severity of Limitation (Qualitative Score)' }
+                    }
+                },
+                plugins: {
+                    title: { display: true, text: 'Comparative Analysis of Core Limitations' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.x !== null) {
+                                    label += `${context.parsed.x}/10`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const gapsContainer = document.getElementById('research-gaps-container');
+        gapsContainer.innerHTML = researchGaps.map((gap, index) => `
+            <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center">
+                        <span class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-teal-500 text-white font-bold text-xl">${index + 1}</span>
+                        <h4 class="ml-4 text-lg font-bold text-slate-800">${gap.title}</h4>
+                    </div>
+                    <p class="mt-4 text-slate-600">${gap.description}</p>
+                </div>
+                <button class="mt-6 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-200 ease-in-out transform hover:scale-105 brainstorm-gap-btn" data-gap-title="${gap.title}">
+                    Brainstorm Ideas ✨
+                </button>
+            </div>
+        `).join('');
+
+        const datasetsContainer = document.getElementById('datasets-container');
+        datasetsContainer.innerHTML = datasets.map(dataset => `
+            <div class="bg-white p-4 rounded-lg border border-slate-200">
+                <h5 class="font-bold text-slate-800">${dataset.name}</h5>
+                <p class="text-sm text-slate-500 mt-1">${dataset.description}</p>
+                <span class="mt-2 inline-block text-xs font-semibold py-1 px-2 rounded-full ${dataset.source === 'Method' ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800'}">${dataset.source}</span>
+            </div>
+        `).join('');
+        
+        const recsContainer = document.getElementById('recommendations-container');
+        recsContainer.innerHTML = recommendations.map(rec => `
+            <div class="bg-slate-50 p-4 rounded-lg">
+                <details>
+                    <summary class="font-semibold text-lg cursor-pointer text-slate-800 hover:text-teal-600 transition-colors">
+                        ${rec.title}
+                    </summary>
+                    <p class="mt-2 text-slate-600 px-4">${rec.description}</p>
+                </details>
+            </div>
+        `).join('');
+        
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
+
+        function changeNavOnScroll() {
+            let index = sections.length;
+            while(--index && window.scrollY + 50 < sections[index].offsetTop) {}
+            
+            navLinks.forEach((link) => link.classList.remove('active'));
+            if (index >= 0 && index < navLinks.length) {
+               const activeLink = document.querySelector(`.nav-link[href="#${sections[index].id}"]`);
+               if (activeLink) activeLink.classList.add('active');
+            }
+        }
+        
+        window.addEventListener('scroll', changeNavOnScroll);
+        changeNavOnScroll();
+
+
+        // Gemini API Integration - Quantum Concept Explainer
+        const quantumConceptInput = document.getElementById('quantumConceptInput');
+        const explainConceptBtn = document.getElementById('explainConceptBtn');
+        const conceptExplanationOutput = document.getElementById('conceptExplanationOutput');
+        const explanationText = document.getElementById('explanationText');
+        const explanationLoading = document.getElementById('explanationLoading');
+
+        explainConceptBtn.addEventListener('click', async () => {
+            const concept = quantumConceptInput.value.trim();
+            if (!concept) {
+                explanationText.textContent = 'Please enter a quantum concept to explain.';
+                conceptExplanationOutput.classList.remove('hidden');
+                return;
+            }
+
+            conceptExplanationOutput.classList.remove('hidden');
+            explanationText.textContent = '';
+            explanationLoading.classList.remove('hidden');
+            explainConceptBtn.disabled = true;
+
+            try {
+                let chatHistory = [];
+                const prompt = `Explain "${concept}" in the context of Quantum AI and anomaly detection, as if explaining to a non-technical financial professional. Keep it concise and under 100 words.`;
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Canvas will automatically provide the API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    explanationText.textContent = text;
+                } else {
+                    explanationText.textContent = 'Could not retrieve explanation. Please try again.';
+                }
+            } catch (error) {
+                console.error('Error fetching quantum concept explanation:', error);
+                explanationText.textContent = 'An error occurred while fetching the explanation.';
+            } finally {
+                explanationLoading.classList.add('hidden');
+                explainConceptBtn.disabled = false;
+            }
+        });
+
+        // Gemini API Integration - Research Gap Brainstormer
+        const brainstormModal = document.getElementById('brainstormModal');
+        const closeButton = document.querySelector('.modal .close-button');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const modalLoading = document.getElementById('modalLoading');
+
+        const brainstormButtons = document.querySelectorAll('.brainstorm-gap-btn');
+
+        brainstormButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                const gapTitle = event.target.dataset.gapTitle;
+                modalTitle.textContent = `Brainstorming Ideas for: ${gapTitle}`;
+                modalContent.innerHTML = '';
+                modalLoading.classList.remove('hidden');
+                brainstormModal.style.display = 'flex'; // Show modal
+
+                try {
+                    let chatHistory = [];
+                    const prompt = `For the research gap "${gapTitle}", suggest 3-5 specific initial research directions or sub-topics that could lead to novel contributions in Quantum AI for financial anomaly detection. Be concise and use bullet points.`;
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = ""; // Canvas will automatically provide the API key
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        // Simple markdown to HTML for bullet points
+                        modalContent.innerHTML = text.split('\n').map(line => {
+                            if (line.startsWith('* ') || line.startsWith('- ')) {
+                                return `<li>${line.substring(2)}</li>`;
+                            }
+                            return line;
+                        }).join('');
+                        if (modalContent.innerHTML.includes('<li>')) {
+                            modalContent.innerHTML = `<ul>${modalContent.innerHTML}</ul>`;
+                        }
+                    } else {
+                        modalContent.textContent = 'Could not generate ideas. Please try again.';
+                    }
+                } catch (error) {
+                    console.error('Error fetching brainstorming ideas:', error);
+                    modalContent.textContent = 'An error occurred while generating ideas.';
+                } finally {
+                    modalLoading.classList.add('hidden');
+                }
+            });
+        });
+
+        closeButton.addEventListener('click', () => {
+            brainstormModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target == brainstormModal) {
+                brainstormModal.style.display = 'none';
+            }
+        });
+
+    });
+    </script>
+</body>
+</html>
