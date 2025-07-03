@@ -525,7 +525,7 @@
                 const prompt = `Explain "${concept}" in the context of Quantum AI and anomaly detection, as if explaining to a non-technical financial professional. Keep it concise and under 100 words.`;
                 chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                 const payload = { contents: chatHistory };
-                const apiKey = ""; // Canvas will automatically provide the API key
+                const apiKey = "AIzaSyCzAGbIZWXlVldc6AtocJcpeaKc84R3o-I"; // Canvas will automatically provide the API key
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(apiUrl, {
@@ -574,7 +574,7 @@
                     const prompt = `For the research gap "${gapTitle}", suggest 3-5 specific initial research directions or sub-topics that could lead to novel contributions in Quantum AI for financial anomaly detection. Be concise and use bullet points.`;
                     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                     const payload = { contents: chatHistory };
-                    const apiKey = ""; // Canvas will automatically provide the API key
+                    const apiKey = "AIzaSyCzAGbIZWXlVldc6AtocJcpeaKc84R3o-I"; // Canvas will automatically provide the API key
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
